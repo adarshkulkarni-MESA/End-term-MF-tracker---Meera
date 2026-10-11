@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary:   #0a0a0a;
+  --bg-card:      #111111;
+  --bg-card2:     #161616;
+  --border:       #222222;
+  --accent:       #6366f1;
+  --accent-glow:  #6366f130;
+  --green:        #22c55e;
+  --amber:        #f59e0b;
+  --red:          #ef4444;
+  --text-primary: #f3f4f6;
+  --text-muted:   #6b7280;
+  --text-dim:     #374151;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.card2 {
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.tab-active {
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent);
+}
+.tab-inactive {
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+}
+.tab-inactive:hover { color: var(--text-primary); }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+.badge-green  { background:#22c55e18; border:1px solid #22c55e; color:#22c55e; }
+.badge-amber  { background:#f59e0b18; border:1px solid #f59e0b; color:#f59e0b; }
+.badge-red    { background:#ef444418; border:1px solid #ef4444; color:#ef4444; }
