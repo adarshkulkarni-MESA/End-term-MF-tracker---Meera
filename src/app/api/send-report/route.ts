@@ -10,5 +10,6 @@ export async function POST(req: NextRequest) {
   }
   const body = await req.json().catch(() => ({})) as { weekDate?: string };
   const result = await runWeeklyReport(body.weekDate);
-  return NextResponse.json(result, { status: result.status === 'failed' ? 500 : 200 });
+  const httpStatus = result.status === 'failed' ? 500 : result.errors.length > 0 ? 207 : 200;
+  return NextResponse.json(result, { status: httpStatus });
 }
