@@ -28,6 +28,12 @@ export interface FundPerformance {
   categoryYtd:    number | null;
 }
 
+// Neon returns DATE columns as JS Date objects in runtime; convert to YYYY-MM-DD
+function toDateStr(val: unknown): string {
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  return String(val).slice(0, 10);
+}
+
 async function loadNav(code: string): Promise<NavPoint[]> {
   const sql = getDb();
   const rows = await sql`
@@ -36,8 +42,7 @@ async function loadNav(code: string): Promise<NavPoint[]> {
     ORDER BY nav_date DESC
     LIMIT 400
   `;
-  // Neon returns DATE columns as ISO timestamps (T00:00:00.000Z); slice to YYYY-MM-DD
-  return rows.map(r => ({ date: (r.nav_date as string).slice(0, 10), nav: Number(r.nav) }));
+  return rows.map(r => ({ date: toDateStr(r.nav_date), nav: Number(r.nav) }));
 }
 
 async function loadIndex(indexName: string): Promise<NavPoint[]> {
@@ -48,7 +53,7 @@ async function loadIndex(indexName: string): Promise<NavPoint[]> {
     ORDER BY price_date DESC
     LIMIT 400
   `;
-  return rows.map(r => ({ date: (r.price_date as string).slice(0, 10), nav: Number(r.close_price) }));
+  return rows.map(r => ({ date: toDateStr(r.price_date), nav: Number(r.close_price) }));
 }
 
 export async function computePerformance(asOf?: string): Promise<FundPerformance[]> {
