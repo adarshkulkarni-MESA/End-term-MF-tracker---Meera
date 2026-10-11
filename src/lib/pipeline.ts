@@ -2,7 +2,6 @@
 
 import { getDb }           from './db';
 import { fetchNavHistory } from './mfapi';
-import { fetchIndexHistory } from './yahoo';
 
 export async function runDailyPipeline(): Promise<{
   status: 'success' | 'partial' | 'failed';
@@ -15,14 +14,14 @@ export async function runDailyPipeline(): Promise<{
   let navUpdated   = 0;
   let indexUpdated = 0;
 
-  const today      = new Date().toISOString().slice(0, 10);
   const oneYearAgo = (() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() - 1);
     return d.toISOString().slice(0, 10);
   })();
+  const today = new Date().toISOString().slice(0, 10);
 
-  // ── 1. Fetch NAVs ──────────────────────────────────────────────────────────
+  // ── 1. Fetch NAVs (batch insert via unnest) ────────────────────────────────
   const funds = await sql`SELECT scheme_code FROM funds WHERE is_active = true`;
   const peers = await sql`SELECT scheme_code FROM peer_funds`;
 
@@ -58,20 +57,27 @@ export async function runDailyPipeline(): Promise<{
     }
   }
 
-  // ── 2. Fetch index prices ──────────────────────────────────────────────────
-  const indices = await sql`SELECT name, ticker FROM market_indices WHERE is_active = true`;
+  // ── 2. Fetch index prices via MFAPI proxy funds ────────────────────────────
+  const indices = await sql`
+    SELECT name, mfapi_scheme_code
+    FROM market_indices
+    WHERE is_active = true AND mfapi_scheme_code IS NOT NULL
+  `;
 
   for (const idx of indices) {
+    const indexName  = idx.name as string;
+    const schemeCode = idx.mfapi_scheme_code as string;
     try {
-      const rows = await fetchIndexHistory(idx.ticker as string, oneYearAgo, today);
-      if (rows.length === 0) {
-        errors.push(`Index no data: ${idx.name} (${idx.ticker})`);
+      const rows   = await fetchNavHistory(schemeCode);
+      const recent = rows.filter(r => r.date >= oneYearAgo);
+      if (recent.length === 0) {
+        errors.push(`Index no data: ${indexName} (mfapi ${schemeCode})`);
         continue;
       }
 
-      const indexNames  = rows.map(() => idx.name as string);
-      const priceDates  = rows.map(r => r.date);
-      const closePrices = rows.map(r => r.close);
+      const indexNames  = recent.map(() => indexName);
+      const priceDates  = recent.map(r => r.date);
+      const closePrices = recent.map(r => r.nav);
 
       await sql`
         INSERT INTO index_history (index_name, price_date, close_price)
@@ -82,9 +88,9 @@ export async function runDailyPipeline(): Promise<{
         ) AS t(index_name, price_date, close_price)
         ON CONFLICT (index_name, price_date) DO UPDATE SET close_price = EXCLUDED.close_price
       `;
-      indexUpdated += rows.length;
+      indexUpdated += recent.length;
     } catch (err) {
-      errors.push(`Index fetch ${idx.name}: ${String(err)}`);
+      errors.push(`Index fetch ${indexName}: ${String(err)}`);
     }
   }
 
