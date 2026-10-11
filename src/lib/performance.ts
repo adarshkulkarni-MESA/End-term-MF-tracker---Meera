@@ -36,7 +36,8 @@ async function loadNav(code: string): Promise<NavPoint[]> {
     ORDER BY nav_date DESC
     LIMIT 400
   `;
-  return rows.map(r => ({ date: r.nav_date as string, nav: Number(r.nav) }));
+  // Neon returns DATE columns as ISO timestamps (T00:00:00.000Z); slice to YYYY-MM-DD
+  return rows.map(r => ({ date: (r.nav_date as string).slice(0, 10), nav: Number(r.nav) }));
 }
 
 async function loadIndex(indexName: string): Promise<NavPoint[]> {
@@ -47,7 +48,7 @@ async function loadIndex(indexName: string): Promise<NavPoint[]> {
     ORDER BY price_date DESC
     LIMIT 400
   `;
-  return rows.map(r => ({ date: r.price_date as string, nav: Number(r.close_price) }));
+  return rows.map(r => ({ date: (r.price_date as string).slice(0, 10), nav: Number(r.close_price) }));
 }
 
 export async function computePerformance(asOf?: string): Promise<FundPerformance[]> {
