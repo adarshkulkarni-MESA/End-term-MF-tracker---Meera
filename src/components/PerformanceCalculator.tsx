@@ -24,7 +24,7 @@ function Field({ label, note, children }: { label: string; note?: string; childr
   );
 }
 
-const INPUT_CLS = 'w-full bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-red-500/50 tabular-nums';
+const INPUT_CLS = 'w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 tabular-nums';
 
 export default function PerformanceCalculator() {
   const [amount,  setAmount]  = useState(100000);
@@ -56,7 +56,7 @@ export default function PerformanceCalculator() {
           {EXAMPLES.map(ex => (
             <button key={ex.label}
               onClick={() => { setAmount(ex.amount); setBuyNav(ex.buyNav); setCurNav(ex.curNav); setBuyDate(ex.date); }}
-              className="text-xs border border-[rgba(190,22,48,0.15)] rounded-full px-3 py-1.5 text-gray-400 hover:border-red-500/40 hover:text-red-300 transition-colors"
+              className="text-xs border border-[#222] rounded-full px-3 py-1.5 text-gray-400 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
             >
               {ex.label}
             </button>

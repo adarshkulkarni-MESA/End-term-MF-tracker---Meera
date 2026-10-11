@@ -124,9 +124,9 @@ function TrackerDashboard() {
 
   const sidebar = (
     <>
-      <div className="px-5 py-5 border-b border-[rgba(200,22,48,0.1)] shrink-0">
-        <div className="text-sm font-bold text-white leading-tight tracking-tight">📊 Meera&apos;s Tracker</div>
-        <div className="text-xs text-red-400/50 mt-0.5 tracking-wide">MF Intelligence Dashboard</div>
+      <div className="px-5 py-5 border-b border-[#1a1a2e] shrink-0">
+        <div className="text-sm font-bold text-white leading-tight">📊 Meera&apos;s Tracker</div>
+        <div className="text-xs text-indigo-400/60 mt-0.5">MF Intelligence Dashboard</div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
         {NAV_ITEMS.map(item => (
@@ -140,8 +140,8 @@ function TrackerDashboard() {
           </button>
         ))}
       </nav>
-      <div className="px-5 py-4 border-t border-[rgba(200,22,48,0.08)] shrink-0">
-        <div className="text-[11px] text-gray-700 tabular-nums">
+      <div className="px-5 py-4 border-t border-[#1a1a2e] shrink-0">
+        <div className="text-xs text-gray-700">
           {data?.lastRun
             ? `Updated ${new Date(data.lastRun.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
             : loading ? 'Loading…' : 'Awaiting data'}
@@ -151,25 +151,25 @@ function TrackerDashboard() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col text-gray-100">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a] text-gray-100">
       <TickerTape />
       <div className="flex flex-1">
         {sidebarOpen && (
           <>
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-            <aside className="fixed inset-y-0 left-0 w-64 z-50 flex flex-col bg-[#060309] border-r border-[rgba(200,22,48,0.1)] overflow-y-auto lg:hidden">
+            <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+            <aside className="fixed inset-y-0 left-0 w-64 z-50 flex flex-col bg-[#08080f] border-r border-[#1a1a2e] overflow-y-auto lg:hidden">
               {sidebar}
             </aside>
           </>
         )}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-[#060309] border-r border-[rgba(200,22,48,0.1)] sticky top-0 h-screen overflow-y-auto">
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-[#08080f] border-r border-[#1a1a2e] sticky top-0 h-screen overflow-y-auto">
           {sidebar}
         </aside>
         <main className="flex-1 min-w-0 flex flex-col">
-          <header className="sticky top-0 z-10 bg-[#07050a]/95 backdrop-blur-md border-b border-[rgba(200,22,48,0.08)] px-4 sm:px-6 py-3 flex items-center gap-3 shrink-0">
+          <header className="sticky top-0 z-10 bg-[#0a0a0a]/95 backdrop-blur-sm border-b border-[#1a1a2e] px-4 sm:px-6 py-3 flex items-center gap-3 shrink-0">
             <button
               onClick={() => setSidebarOpen(v => !v)}
-              className="lg:hidden text-gray-500 hover:text-red-300 text-xl leading-none w-8 transition-colors"
+              className="lg:hidden text-gray-400 hover:text-white text-xl leading-none w-8"
               aria-label="Toggle menu"
             >
               ☰
@@ -177,7 +177,7 @@ function TrackerDashboard() {
             <span className="text-sm font-semibold text-gray-200 flex-1 truncate">{activeLabel}</span>
             <button
               onClick={() => void load()}
-              className="text-xs text-gray-600 hover:text-red-300 border border-[rgba(190,22,48,0.15)] hover:border-[rgba(220,38,38,0.3)] rounded-lg px-3 py-1.5 transition-all shrink-0"
+              className="text-xs text-gray-500 hover:text-white border border-[#222] rounded px-3 py-1.5 transition-colors shrink-0"
             >
               ↻ Refresh
             </button>
@@ -193,7 +193,7 @@ function TrackerDashboard() {
               <div className="card p-8 text-center">
                 <div className="text-red-400 font-medium mb-2">Failed to load data</div>
                 <div className="text-gray-500 text-sm mb-4">{error}</div>
-                <button onClick={() => void load()} className="text-red-400 hover:text-red-300 text-sm transition-colors">Try again</button>
+                <button onClick={() => void load()} className="text-indigo-400 hover:text-indigo-300 text-sm">Try again</button>
               </div>
             )}
             {!standaloneContent && !loading && !error && data && (

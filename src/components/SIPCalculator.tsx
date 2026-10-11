@@ -18,11 +18,11 @@ function SliderField({
     <div>
       <div className="flex justify-between items-baseline mb-2">
         <span className="text-sm text-gray-400">{label}</span>
-        <span className="text-base font-bold text-red-300">{display}</span>
+        <span className="text-base font-bold text-indigo-300">{display}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1.5 rounded-full appearance-none bg-[#222] accent-red-500 cursor-pointer" />
+        className="w-full h-1.5 rounded-full appearance-none bg-[#222] accent-indigo-500 cursor-pointer" />
       <div className="flex justify-between text-xs text-gray-700 mt-1.5">
         <span>{typeof min === 'number' && min >= 1000 ? fmtINR(min) : min}</span>
         <span>{typeof max === 'number' && max >= 1000 ? fmtINR(max) : max}</span>
@@ -67,7 +67,7 @@ export default function SIPCalculator() {
           {PRESETS.map(p => (
             <button key={p.label}
               onClick={() => { setMonthly(p.monthly); setYears(p.years); setRate(p.rate); }}
-              className="text-xs border border-[rgba(190,22,48,0.15)] rounded-full px-3 py-1.5 text-gray-400 hover:border-red-500/40 hover:text-red-300 transition-colors"
+              className="text-xs border border-[#222] rounded-full px-3 py-1.5 text-gray-400 hover:border-indigo-500/50 hover:text-indigo-300 transition-colors"
             >
               {p.label}
             </button>
@@ -106,7 +106,7 @@ export default function SIPCalculator() {
           {[
             { label: 'Invested',   value: fmtINR(invested), color: 'text-blue-400'    },
             { label: 'Est. Returns', value: fmtINR(returns), color: 'text-emerald-400' },
-            { label: 'Total Value',  value: fmtINR(total),   color: 'text-red-300'     },
+            { label: 'Total Value',  value: fmtINR(total),   color: 'text-indigo-300'  },
           ].map(s => (
             <div key={s.label} className="card2 p-4 text-center">
               <div className="text-xs text-gray-500 mb-2">{s.label}</div>
