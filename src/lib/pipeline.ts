@@ -39,13 +39,19 @@ export async function runDailyPipeline(): Promise<{
       const recent = rows.filter(r => r.date >= oneYearAgo);
       if (recent.length === 0) continue;
 
-      for (const r of recent) {
-        await sql`
-          INSERT INTO nav_history (scheme_code, nav_date, nav)
-          VALUES (${code}, ${r.date}, ${r.nav})
-          ON CONFLICT (scheme_code, nav_date) DO UPDATE SET nav = EXCLUDED.nav
-        `;
-      }
+      const schemeCodes = recent.map(() => code);
+      const navDates    = recent.map(r => r.date);
+      const navValues   = recent.map(r => r.nav);
+
+      await sql`
+        INSERT INTO nav_history (scheme_code, nav_date, nav)
+        SELECT * FROM unnest(
+          ${schemeCodes}::text[],
+          ${navDates}::date[],
+          ${navValues}::numeric[]
+        ) AS t(scheme_code, nav_date, nav)
+        ON CONFLICT (scheme_code, nav_date) DO UPDATE SET nav = EXCLUDED.nav
+      `;
       navUpdated += recent.length;
     } catch (err) {
       errors.push(`NAV fetch ${code}: ${String(err)}`);
@@ -62,13 +68,20 @@ export async function runDailyPipeline(): Promise<{
         errors.push(`Index no data: ${idx.name} (${idx.ticker})`);
         continue;
       }
-      for (const r of rows) {
-        await sql`
-          INSERT INTO index_history (index_name, price_date, close_price)
-          VALUES (${idx.name}, ${r.date}, ${r.close})
-          ON CONFLICT (index_name, price_date) DO UPDATE SET close_price = EXCLUDED.close_price
-        `;
-      }
+
+      const indexNames  = rows.map(() => idx.name as string);
+      const priceDates  = rows.map(r => r.date);
+      const closePrices = rows.map(r => r.close);
+
+      await sql`
+        INSERT INTO index_history (index_name, price_date, close_price)
+        SELECT * FROM unnest(
+          ${indexNames}::text[],
+          ${priceDates}::date[],
+          ${closePrices}::numeric[]
+        ) AS t(index_name, price_date, close_price)
+        ON CONFLICT (index_name, price_date) DO UPDATE SET close_price = EXCLUDED.close_price
+      `;
       indexUpdated += rows.length;
     } catch (err) {
       errors.push(`Index fetch ${idx.name}: ${String(err)}`);
