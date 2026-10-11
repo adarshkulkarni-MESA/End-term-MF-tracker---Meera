@@ -63,11 +63,14 @@ export default function ThisWeekTab({ data }: Props) {
         },
         body: JSON.stringify({}),
       });
-      const json = await res.json() as { status?: string; error?: string };
+      const json = await res.json() as { status?: string; error?: string; errors?: string[]; emailSent?: boolean };
       if (!res.ok) {
-        setSendResult({ ok: false, msg: json.error ?? `HTTP ${res.status}` });
+        const detail = json.errors?.join('; ') ?? json.error ?? `HTTP ${res.status}`;
+        setSendResult({ ok: false, msg: detail });
+      } else if (json.emailSent === false && json.errors && json.errors.length > 0) {
+        setSendResult({ ok: false, msg: json.errors.join('; ') });
       } else {
-        setSendResult({ ok: true, msg: `Report sent! Status: ${json.status ?? 'success'}` });
+        setSendResult({ ok: true, msg: 'Report generated and email sent successfully!' });
         setTimeout(() => setShowModal(false), 2000);
       }
     } catch (e) {

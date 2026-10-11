@@ -112,11 +112,10 @@ export async function sendReport(
   const apiKey    = process.env.RESEND_API_KEY;
   const toEmail   = process.env.REPORT_TO_EMAIL;
   const ccEmail   = process.env.REPORT_CC_EMAIL;
-  const fromEmail = process.env.REPORT_FROM_EMAIL ?? 'reports@mf-tracker.meera.app';
+  const fromEmail = process.env.REPORT_FROM_EMAIL ?? 'onboarding@resend.dev';
 
-  if (!apiKey || !toEmail) {
-    return { ok: false, error: 'RESEND_API_KEY or REPORT_TO_EMAIL not set' };
-  }
+  if (!apiKey)    return { ok: false, error: 'RESEND_API_KEY is not set in environment variables' };
+  if (!toEmail)   return { ok: false, error: 'REPORT_TO_EMAIL is not set — add the recipient email in Vercel environment variables' };
 
   const resend = new Resend(apiKey);
   const to = [toEmail];
