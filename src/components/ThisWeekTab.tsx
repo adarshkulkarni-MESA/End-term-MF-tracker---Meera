@@ -144,7 +144,7 @@ export default function ThisWeekTab({ data }: Props) {
         <div className="space-y-3">
           {aiSummaries.length > 0
             ? aiSummaries.map((fs, i) => (
-                <div key={i} className="card2 p-4 border-l-2 border-indigo-500">
+                <div key={i} className="card2 p-4 border-l-2 border-red-700/60">
                   <div className="text-sm font-semibold text-gray-200 mb-1">{fs.schemeName}</div>
                   <div className="text-sm text-gray-400 leading-relaxed">{fs.summary}</div>
                 </div>
@@ -188,7 +188,7 @@ function SendReportSection({ showModal, setShowModal, passphrase, setPassphrase,
       </div>
       <button
         onClick={() => { setShowModal(true); }}
-        className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded px-4 py-2 transition-colors whitespace-nowrap"
+        className="text-sm btn-red rounded px-4 py-2 whitespace-nowrap"
       >
         ✉ Send Report
       </button>
@@ -205,7 +205,7 @@ function SendReportSection({ showModal, setShowModal, passphrase, setPassphrase,
               value={passphrase}
               onChange={e => setPassphrase(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !sending && onSend()}
-              className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-red-500/50"
             />
             {sendResult && (
               <div className={`text-sm rounded px-3 py-2 ${sendResult.ok ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
@@ -222,7 +222,7 @@ function SendReportSection({ showModal, setShowModal, passphrase, setPassphrase,
               <button
                 onClick={onSend}
                 disabled={sending}
-                className="text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded px-4 py-1.5 transition-colors"
+                className="text-sm btn-red rounded px-4 py-1.5"
               >
                 {sending ? 'Sending…' : 'Send'}
               </button>

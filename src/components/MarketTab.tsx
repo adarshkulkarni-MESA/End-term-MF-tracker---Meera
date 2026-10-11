@@ -52,7 +52,7 @@ export default function MarketTab({ data }: Props) {
               <div key={i} className="card2 p-3 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   {item.url ? (
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-200 hover:text-indigo-300 transition-colors leading-snug">{item.headline}</a>
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-200 hover:text-red-300 transition-colors leading-snug">{item.headline}</a>
                   ) : (
                     <div className="text-sm text-gray-200 leading-snug">{item.headline}</div>
                   )}

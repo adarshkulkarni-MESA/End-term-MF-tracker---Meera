@@ -28,17 +28,18 @@ const DOUBLED = [...TICKERS, ...TICKERS];
 
 export default function TickerTape() {
   return (
-    <div className="overflow-hidden bg-[#050508] border-b border-[#1a1a2e] py-2 shrink-0">
+    <div className="overflow-hidden border-b py-2 shrink-0"
+      style={{ background: 'rgba(6,3,10,0.98)', borderColor: 'rgba(200,22,48,0.1)' }}>
       <div className="ticker-track gap-0">
         {DOUBLED.map((t, i) => (
           <span key={i} className="flex items-center gap-2 text-xs px-4 whitespace-nowrap">
-            <span className="text-gray-300 font-semibold tracking-wide">{t.sym}</span>
-            <span className="text-gray-500">{t.price}</span>
+            <span className="text-gray-400 font-semibold tracking-wide">{t.sym}</span>
+            <span className="text-gray-600 tabular-nums">{t.price}</span>
             <span className={`font-medium flex items-center gap-0.5 ${t.up ? 'text-emerald-400' : 'text-red-400'}`}>
               <span className="text-[10px]">{t.up ? '▲' : '▼'}</span>
               {t.change}
             </span>
-            <span className="text-[#1a1a2e] ml-3 select-none">·</span>
+            <span className="text-gray-800 ml-3 select-none">·</span>
           </span>
         ))}
       </div>

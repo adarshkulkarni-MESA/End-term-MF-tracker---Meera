@@ -80,7 +80,7 @@ export default function Screener() {
           { label: 'ROE %',       desc: 'Return on equity — how efficiently profits are generated. >15% is healthy for most sectors.' },
         ].map(m => (
           <div key={m.label} className="card2 p-3">
-            <div className="font-semibold text-indigo-300 mb-1">{m.label}</div>
+            <div className="font-semibold text-red-300 mb-1">{m.label}</div>
             <div className="text-gray-500 leading-relaxed">{m.desc}</div>
           </div>
         ))}
@@ -91,10 +91,10 @@ export default function Screener() {
         <input
           value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Search company or symbol…"
-          className="flex-1 bg-[#111] border border-[#222] rounded-lg px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded-lg px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-red-500/50"
         />
         <select value={sector} onChange={e => setSector(e.target.value)}
-          className="bg-[#111] border border-[#222] rounded-lg px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500">
+          className="bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded-lg px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-red-500/50">
           {SECTORS.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
@@ -110,7 +110,7 @@ export default function Screener() {
                   className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-300 select-none whitespace-nowrap"
                 >
                   {c.label}{' '}
-                  <span className={sort.col === c.key ? 'text-indigo-400' : 'text-gray-700'}>
+                  <span className={sort.col === c.key ? 'text-red-400' : 'text-gray-700'}>
                     {sort.col === c.key ? (sort.asc ? '↑' : '↓') : '↕'}
                   </span>
                 </th>

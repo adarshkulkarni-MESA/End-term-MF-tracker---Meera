@@ -87,23 +87,23 @@ export default function ManageTab({ onRefresh }: Props) {
           <div>
             <label className="text-xs text-gray-500 block mb-1">Scheme Code (from AMFI / MFAPI)</label>
             <div className="flex gap-2">
-              <input type="text" value={code} onChange={e => { setCode(e.target.value); setLookupName(null); }} placeholder="e.g. 120503" className="flex-1 bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
+              <input type="text" value={code} onChange={e => { setCode(e.target.value); setLookupName(null); }} placeholder="e.g. 120503" className="flex-1 bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-red-500/50" />
               <button onClick={() => void lookup()} disabled={lookupLoading || !code.trim()} className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#222] border border-[#333] text-sm rounded text-gray-300 disabled:opacity-40 transition-colors">{lookupLoading ? '…' : 'Look up'}</button>
             </div>
             {lookupName && <div className={`text-xs mt-1.5 ${lookupName.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{lookupName}</div>}
-            <div className="text-xs text-gray-600 mt-1">Find the scheme code at <a href="https://mfapi.in" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">mfapi.in</a></div>
+            <div className="text-xs text-gray-600 mt-1">Find the scheme code at <a href="https://mfapi.in" target="_blank" rel="noopener noreferrer" className="text-red-400/70 hover:text-red-300 hover:underline">mfapi.in</a></div>
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Fund Type</label>
-            <select value={fundType} onChange={e => setFundType(e.target.value)} className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500">
+            <select value={fundType} onChange={e => setFundType(e.target.value)} className="w-full bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-red-500/50">
               {FUND_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Admin Passphrase (if set)</label>
-            <input type="password" value={passphrase} onChange={e => setPass(e.target.value)} placeholder="Leave blank if not configured" className="w-full bg-[#0d0d0d] border border-[#2a2a2a] rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-indigo-500" />
+            <input type="password" value={passphrase} onChange={e => setPass(e.target.value)} placeholder="Leave blank if not configured" className="w-full bg-[rgba(12,4,8,0.7)] border border-[rgba(190,22,48,0.14)] rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-red-500/50" />
           </div>
-          <button onClick={() => void addFund()} disabled={!lookupName?.startsWith('✓')} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors">Add Fund</button>
+          <button onClick={() => void addFund()} disabled={!lookupName?.startsWith('✓')} className="w-full py-2.5 btn-red text-sm font-medium">Add Fund</button>
           {addStatus && <div className={`text-sm ${addStatus.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{addStatus}</div>}
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function ManageTab({ onRefresh }: Props) {
       <div className="card2 p-4 text-xs text-gray-500 space-y-2">
         <div className="font-medium text-gray-400">How to find your fund's scheme code</div>
         <ol className="list-decimal list-inside space-y-1">
-          <li>Go to <a href="https://mfapi.in" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">mfapi.in</a></li>
+          <li>Go to <a href="https://mfapi.in" target="_blank" rel="noopener noreferrer" className="text-red-400/70 hover:text-red-300 hover:underline">mfapi.in</a></li>
           <li>Search for your fund by name</li>
           <li>Copy the numeric scheme code (e.g. 120503)</li>
           <li>Paste it above, click "Look up", pick the fund type, and click "Add Fund"</li>
