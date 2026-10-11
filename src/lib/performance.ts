@@ -1,6 +1,6 @@
 // Compute per-fund performance vs benchmark and category average
 
-import { supabase } from './supabase';
+import { getDb } from './db';
 import {
   NavPoint,
   navOnDate,
@@ -29,53 +29,49 @@ export interface FundPerformance {
 }
 
 async function loadNav(code: string): Promise<NavPoint[]> {
-  const { data } = await supabase
-    .from('nav_history')
-    .select('nav_date, nav')
-    .eq('scheme_code', code)
-    .order('nav_date', { ascending: false })
-    .limit(400);
-  return (data ?? []).map(r => ({ date: r.nav_date as string, nav: Number(r.nav) }));
+  const sql = getDb();
+  const rows = await sql`
+    SELECT nav_date, nav FROM nav_history
+    WHERE scheme_code = ${code}
+    ORDER BY nav_date DESC
+    LIMIT 400
+  `;
+  return rows.map(r => ({ date: r.nav_date as string, nav: Number(r.nav) }));
 }
 
 async function loadIndex(indexName: string): Promise<NavPoint[]> {
-  const { data } = await supabase
-    .from('index_history')
-    .select('price_date, close_price')
-    .eq('index_name', indexName)
-    .order('price_date', { ascending: false })
-    .limit(400);
-  return (data ?? []).map(r => ({ date: r.price_date as string, nav: Number(r.close_price) }));
+  const sql = getDb();
+  const rows = await sql`
+    SELECT price_date, close_price FROM index_history
+    WHERE index_name = ${indexName}
+    ORDER BY price_date DESC
+    LIMIT 400
+  `;
+  return rows.map(r => ({ date: r.price_date as string, nav: Number(r.close_price) }));
 }
 
 export async function computePerformance(asOf?: string): Promise<FundPerformance[]> {
+  const sql  = getDb();
   const date = asOf ?? new Date().toISOString().slice(0, 10);
 
-  const { data: funds } = await supabase
-    .from('funds')
-    .select('scheme_code, scheme_name, fund_type')
-    .eq('is_active', true);
+  const funds = await sql`SELECT scheme_code, scheme_name, fund_type FROM funds WHERE is_active = true`;
+  if (!funds.length) return [];
 
-  if (!funds?.length) return [];
-
-  const { data: benchmarkRows } = await supabase
-    .from('benchmark_map')
-    .select('fund_type, index_name');
+  const benchRows = await sql`SELECT fund_type, index_name FROM benchmark_map`;
   const benchmarkMap = Object.fromEntries(
-    (benchmarkRows ?? []).map(r => [r.fund_type, r.index_name])
+    benchRows.map(r => [r.fund_type as string, r.index_name as string])
   );
 
-  const { data: peerRows } = await supabase
-    .from('peer_funds')
-    .select('scheme_code, fund_type');
+  const peerRows = await sql`SELECT scheme_code, fund_type FROM peer_funds`;
   const peersByType: Record<string, string[]> = {};
-  for (const p of peerRows ?? []) {
-    if (!peersByType[p.fund_type]) peersByType[p.fund_type] = [];
-    peersByType[p.fund_type].push(p.scheme_code);
+  for (const p of peerRows) {
+    const ft = p.fund_type as string;
+    if (!peersByType[ft]) peersByType[ft] = [];
+    peersByType[ft].push(p.scheme_code as string);
   }
 
-  const navCache: Record<string, NavPoint[]>   = {};
-  const idxCache: Record<string, NavPoint[]>   = {};
+  const navCache: Record<string, NavPoint[]> = {};
+  const idxCache: Record<string, NavPoint[]> = {};
   const catCache: Record<string, { w: number|null; m: number|null; y: number|null }> = {};
 
   async function getNav(code: string) {
@@ -90,14 +86,14 @@ export async function computePerformance(asOf?: string): Promise<FundPerformance
   const results: FundPerformance[] = [];
 
   for (const fund of funds) {
-    const navPts = await getNav(fund.scheme_code);
+    const navPts = await getNav(fund.scheme_code as string);
 
     const fWeek  = weekReturn(navPts, date);
     const fMonth = monthReturn(navPts, date);
     const fYtd   = ytdReturn(navPts, date);
     const curNav = navOnDate(navPts, date);
 
-    const benchName = benchmarkMap[fund.fund_type] ?? null;
+    const benchName = benchmarkMap[fund.fund_type as string] ?? null;
     let bWeek: number|null = null, bMonth: number|null = null, bYtd: number|null = null;
     if (benchName) {
       const idxPts = await getIdx(benchName);
@@ -106,8 +102,9 @@ export async function computePerformance(asOf?: string): Promise<FundPerformance
       bYtd   = ytdReturn(idxPts, date);
     }
 
-    if (!catCache[fund.fund_type]) {
-      const peers = peersByType[fund.fund_type] ?? [];
+    const ft = fund.fund_type as string;
+    if (!catCache[ft]) {
+      const peers = peersByType[ft] ?? [];
       const peerWeeks:  (number|null)[] = [];
       const peerMonths: (number|null)[] = [];
       const peerYtds:   (number|null)[] = [];
@@ -117,18 +114,18 @@ export async function computePerformance(asOf?: string): Promise<FundPerformance
         peerMonths.push(monthReturn(pp, date));
         peerYtds.push(ytdReturn(pp, date));
       }
-      catCache[fund.fund_type] = {
+      catCache[ft] = {
         w: categoryAverage(peerWeeks),
         m: categoryAverage(peerMonths),
         y: categoryAverage(peerYtds),
       };
     }
-    const cat = catCache[fund.fund_type];
+    const cat = catCache[ft];
 
     results.push({
-      schemeCode:    fund.scheme_code,
-      schemeName:    fund.scheme_name,
-      fundType:      fund.fund_type,
+      schemeCode:    fund.scheme_code as string,
+      schemeName:    fund.scheme_name as string,
+      fundType:      ft,
       asOf:          date,
       currentNav:    curNav,
       weekReturn:    fWeek,
