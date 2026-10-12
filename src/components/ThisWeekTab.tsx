@@ -10,84 +10,98 @@ const FUND_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#14b8a6'];
 function WeeklyReturnChart({ perf }: { perf: FundPerf[] }) {
   if (perf.length === 0) return null;
 
-  const W = 400, H = 28 + perf.length * 36;
-  const padL = 16, padR = 60, padT = 20, padB = 8;
+  const W = 400, H = 180;
+  const padL = 52, padR = 16, padT = 16, padB = 44;
   const cW = W - padL - padR;
   const cH = H - padT - padB;
-  const rowH = cH / perf.length;
 
   const allVals = perf.flatMap(f => [f.weekReturn, f.benchmarkWeek]).filter((v): v is number => v !== null);
   const maxAbs  = Math.max(...allVals.map(Math.abs), 1);
+  const zeroY   = padT + cH / 2;
 
-  function bw(v: number | null) {
-    if (v === null) return 0;
-    return (Math.abs(v) / maxAbs) * (cW * 0.5);
+  function fy(v: number | null) {
+    if (v === null) return zeroY;
+    return padT + ((maxAbs - v) / (2 * maxAbs)) * cH;
   }
 
-  const zeroX = padL + cW * 0.5;
+  function fx(i: number) {
+    return padL + (i + 0.5) * (cW / perf.length);
+  }
+
+  const yTicks = [maxAbs, maxAbs / 2, 0, -maxAbs / 2, -maxAbs];
 
   return (
     <div>
-      <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-1">1-Week Returns: Fund vs Benchmark</div>
+      <div className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: 'var(--text-dim)' }}>
+        1-Week Returns: Fund vs Benchmark
+      </div>
       <div className="flex gap-4 mb-2">
-        <div className="flex items-center gap-1 text-[10px] text-gray-600"><div className="w-3 h-2 rounded-sm bg-indigo-500" /> Fund</div>
-        <div className="flex items-center gap-1 text-[10px] text-gray-600"><div className="w-3 h-2 rounded-sm bg-gray-600" /> Benchmark</div>
+        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-dim)' }}>
+          <div className="w-3 h-2 rounded-sm" style={{ background: '#6366f1' }} /> Fund
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-dim)' }}>
+          <div className="w-3 h-2 rounded-sm" style={{ background: '#6b7280' }} /> Benchmark
+        </div>
       </div>
       <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${W} ${H}`} style={{ minWidth: 260, width: '100%', height: H }}>
-          {/* zero axis */}
-          <line x1={zeroX} y1={padT - 8} x2={zeroX} y2={H - padB} stroke="#374151" strokeWidth="1" />
-          <text x={zeroX} y={padT - 10} textAnchor="middle" fontSize="7" fill="#4b5563">0%</text>
+          {/* Y-axis ticks and grid lines */}
+          {yTicks.map((v, i) => (
+            <g key={i}>
+              <line
+                x1={padL} y1={fy(v)} x2={W - padR} y2={fy(v)}
+                stroke={v === 0 ? '#374151' : '#1e2038'}
+                strokeWidth={v === 0 ? 1 : 1}
+                strokeDasharray={v === 0 ? undefined : '3,4'}
+              />
+              <text x={padL - 5} y={fy(v) + 3} textAnchor="end" fontSize="7" fill="#4b5563">
+                {v === 0 ? '0%' : `${v > 0 ? '+' : ''}${v.toFixed(1)}%`}
+              </text>
+            </g>
+          ))}
 
           {perf.map((f, fi) => {
-            const color   = FUND_COLORS[fi % FUND_COLORS.length];
-            const cy      = padT + fi * rowH;
-            const fundW   = bw(f.weekReturn);
-            const benchW  = bw(f.benchmarkWeek);
-            const fundPos = (f.weekReturn ?? 0) >= 0;
-            const name    = f.schemeName.split(' ').slice(0, 3).join(' ');
+            const color  = FUND_COLORS[fi % FUND_COLORS.length];
+            const x      = fx(fi);
+            const fundY  = fy(f.weekReturn);
+            const benchY = fy(f.benchmarkWeek);
+            const pos    = (f.weekReturn ?? 0) >= 0;
+            const name   = f.schemeName.split(' ').slice(0, 2).join(' ');
 
             return (
               <g key={f.schemeCode}>
-                {/* fund bar */}
-                <rect
-                  x={fundPos ? zeroX : zeroX - fundW}
-                  y={cy + 2}
-                  width={fundW}
-                  height={rowH * 0.38}
-                  rx="2"
-                  fill={color}
-                  opacity="0.9"
-                />
-                {/* benchmark bar */}
-                {f.benchmarkWeek !== null && (
-                  <rect
-                    x={(f.benchmarkWeek >= 0) ? zeroX : zeroX - benchW}
-                    y={cy + rowH * 0.42 + 3}
-                    width={benchW}
-                    height={rowH * 0.28}
-                    rx="1.5"
-                    fill="#6b7280"
-                    opacity="0.65"
-                  />
+                {/* Lollipop stick — fund */}
+                {f.weekReturn !== null && (
+                  <line x1={x - 7} y1={zeroY} x2={x - 7} y2={fundY}
+                    stroke={color} strokeWidth="1.5" strokeOpacity="0.55" />
                 )}
-                {/* fund name label */}
-                <text x={padL} y={cy + 1} fontSize="7.5" fill="#9ca3af" dominantBaseline="hanging">
-                  {name}
-                </text>
-                {/* value label */}
+                {/* Lollipop stick — benchmark */}
+                {f.benchmarkWeek !== null && (
+                  <line x1={x + 7} y1={zeroY} x2={x + 7} y2={benchY}
+                    stroke="#6b7280" strokeWidth="1.5" strokeOpacity="0.5" />
+                )}
+                {/* Fund dot */}
+                {f.weekReturn !== null && (
+                  <circle cx={x - 7} cy={fundY} r="4.5" fill={color} />
+                )}
+                {/* Benchmark dot */}
+                {f.benchmarkWeek !== null && (
+                  <circle cx={x + 7} cy={benchY} r="3" fill="#6b7280" opacity="0.8" />
+                )}
+                {/* Return value label */}
                 {f.weekReturn !== null && (
                   <text
-                    x={W - padR + 4}
-                    y={cy + rowH * 0.22 + 2}
-                    fontSize="8.5"
-                    fill={fundPos ? '#34d399' : '#f87171'}
-                    fontWeight="600"
-                    dominantBaseline="middle"
+                    x={x - 7} y={pos ? fundY - 8 : fundY + 12}
+                    textAnchor="middle" fontSize="7.5"
+                    fill={pos ? '#34d399' : '#f87171'} fontWeight="600"
                   >
-                    {fundPos ? '+' : ''}{f.weekReturn.toFixed(2)}%
+                    {pos ? '+' : ''}{f.weekReturn.toFixed(1)}%
                   </text>
                 )}
+                {/* Fund name at bottom */}
+                <text x={x} y={H - 6} textAnchor="middle" fontSize="7" fill="#4b5563">
+                  {name}
+                </text>
               </g>
             );
           })}
@@ -138,9 +152,9 @@ export default function ThisWeekTab({ data }: Props) {
   const report = data.latestReport;
   const perf   = data.performance;
 
-  const [sending,  setSending]  = useState(false);
+  const [sending,    setSending]    = useState(false);
   const [passphrase, setPassphrase] = useState('');
-  const [showModal, setShowModal]   = useState(false);
+  const [showModal,  setShowModal]  = useState(false);
   const [sendResult, setSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   async function handleSend() {
@@ -175,10 +189,12 @@ export default function ThisWeekTab({ data }: Props) {
   if (!report && perf.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="card p-8 text-center text-gray-500">
+        <div className="card p-8 text-center" style={{ color: 'var(--text-moon)' }}>
           <div className="text-4xl mb-3">📭</div>
           <div className="font-medium">No report yet</div>
-          <div className="text-sm mt-1">The first Saturday report will arrive after deployment. Daily data is being collected.</div>
+          <div className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>
+            The first Saturday report will arrive after deployment. Daily data is being collected.
+          </div>
         </div>
         <SendReportSection
           showModal={showModal} setShowModal={setShowModal}
@@ -196,15 +212,15 @@ export default function ThisWeekTab({ data }: Props) {
       {/* ── Verdict ──────────────────────────────────────────────────── */}
       {report && (
         <div className="card p-6 text-center">
-          <div className="text-gray-400 text-sm mb-3">
+          <div className="text-sm mb-3" style={{ color: 'var(--text-moon)' }}>
             Week ending {new Date(report.week_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
           <VerdictBadge verdict={report.verdict} />
-          <p className="text-gray-300 mt-3 text-sm max-w-xl mx-auto">{report.reason}</p>
+          <p className="mt-3 text-sm max-w-xl mx-auto" style={{ color: 'var(--text-moon)' }}>{report.reason}</p>
         </div>
       )}
 
-      {/* ── Weekly returns chart ─────────────────────────────────────── */}
+      {/* ── Weekly returns dot chart ─────────────────────────────────── */}
       {perf.length > 0 && (
         <div className="card p-5">
           <WeeklyReturnChart perf={perf} />
@@ -213,23 +229,29 @@ export default function ThisWeekTab({ data }: Props) {
 
       {/* ── Quick returns grid ───────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">This Week's Returns</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-moon)' }}>
+          This Week&apos;s Returns
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {perf.map(f => (
             <div key={f.schemeCode} className="card2 p-4">
-              <div className="text-xs text-gray-500 mb-1 uppercase tracking-wide">{f.fundType.replace(/_/g, ' ')}</div>
-              <div className="text-sm font-medium text-gray-200 mb-3 leading-tight">{f.schemeName}</div>
+              <div className="text-xs mb-1 uppercase tracking-wide" style={{ color: 'var(--text-dim)' }}>
+                {f.fundType.replace(/_/g, ' ')}
+              </div>
+              <div className="text-sm font-medium mb-3 leading-tight" style={{ color: 'var(--text-star)' }}>
+                {f.schemeName}
+              </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-xs text-gray-600 mb-0.5">1W</div>
+                  <div className="text-xs mb-0.5" style={{ color: 'var(--text-dim)' }}>1W</div>
                   <ReturnBadge value={f.weekReturn} />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-600 mb-0.5">1M</div>
+                  <div className="text-xs mb-0.5" style={{ color: 'var(--text-dim)' }}>1M</div>
                   <ReturnBadge value={f.monthReturn} />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-600 mb-0.5">YTD</div>
+                  <div className="text-xs mb-0.5" style={{ color: 'var(--text-dim)' }}>YTD</div>
                   <ReturnBadge value={f.ytdReturn} />
                 </div>
               </div>
@@ -240,21 +262,24 @@ export default function ThisWeekTab({ data }: Props) {
 
       {/* ── Fund summaries ───────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">
-          Fund Summaries {aiSummaries.length === 0 && <span className="text-gray-600 normal-case text-xs ml-1">(auto-generated)</span>}
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-moon)' }}>
+          Fund Summaries{' '}
+          {aiSummaries.length === 0 && (
+            <span className="normal-case text-xs ml-1" style={{ color: 'var(--text-dim)' }}>(auto-generated)</span>
+          )}
         </h2>
         <div className="space-y-3">
           {aiSummaries.length > 0
             ? aiSummaries.map((fs, i) => (
-                <div key={i} className="card2 p-4 border-l-2 border-indigo-500">
-                  <div className="text-sm font-semibold text-gray-200 mb-1">{fs.schemeName}</div>
-                  <div className="text-sm text-gray-400 leading-relaxed">{fs.summary}</div>
+                <div key={i} className="card2 p-4" style={{ borderLeft: '2px solid var(--accent-violet)' }}>
+                  <div className="text-sm font-semibold mb-1" style={{ color: 'var(--text-star)' }}>{fs.schemeName}</div>
+                  <div className="text-sm leading-relaxed" style={{ color: 'var(--text-moon)' }}>{fs.summary}</div>
                 </div>
               ))
             : perf.map(f => (
-                <div key={f.schemeCode} className="card2 p-4 border-l-2 border-gray-700">
-                  <div className="text-sm font-semibold text-gray-200 mb-1">{f.schemeName}</div>
-                  <div className="text-sm text-gray-400 leading-relaxed">{autoSummary(f)}</div>
+                <div key={f.schemeCode} className="card2 p-4" style={{ borderLeft: '2px solid rgba(70,60,140,0.4)' }}>
+                  <div className="text-sm font-semibold mb-1" style={{ color: 'var(--text-star)' }}>{f.schemeName}</div>
+                  <div className="text-sm leading-relaxed" style={{ color: 'var(--text-moon)' }}>{autoSummary(f)}</div>
                 </div>
               ))
           }
@@ -285,29 +310,34 @@ function SendReportSection({ showModal, setShowModal, passphrase, setPassphrase,
   return (
     <div className="card p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
-        <div className="text-sm font-medium text-gray-200">Generate & send weekly report</div>
-        <div className="text-xs text-gray-500 mt-0.5">Triggers AI analysis and sends the report email via Resend</div>
+        <div className="text-sm font-medium" style={{ color: 'var(--text-star)' }}>Generate &amp; send weekly report</div>
+        <div className="text-xs mt-0.5" style={{ color: 'var(--text-dim)' }}>Triggers AI analysis and sends the report email via Resend</div>
       </div>
       <button
-        onClick={() => { setShowModal(true); }}
-        className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded px-4 py-2 transition-colors whitespace-nowrap"
+        onClick={() => setShowModal(true)}
+        className="text-sm rounded px-4 py-2 transition-colors whitespace-nowrap"
+        style={{ background: 'var(--accent-violet)', color: '#fff' }}
       >
         ✉ Send Report
       </button>
 
-      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)' }} onClick={() => setShowModal(false)}>
           <div className="card p-6 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="text-base font-semibold text-gray-100">Send Weekly Report</div>
-            <div className="text-sm text-gray-400">Enter the admin passphrase to trigger the report. Leave blank if no passphrase is set.</div>
+            <div className="text-base font-semibold" style={{ color: 'var(--text-star)' }}>Send Weekly Report</div>
+            <div className="text-sm" style={{ color: 'var(--text-moon)' }}>Enter the admin passphrase to trigger the report. Leave blank if no passphrase is set.</div>
             <input
               type="password"
               placeholder="Admin passphrase (optional)"
               value={passphrase}
               onChange={e => setPassphrase(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !sending && onSend()}
-              className="w-full bg-[#0a0a0a] border border-[#333] rounded px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded px-3 py-2 text-sm focus:outline-none"
+              style={{
+                background:  'rgba(8,8,22,0.9)',
+                border:      '1px solid rgba(80,60,180,0.25)',
+                color:       'var(--text-star)',
+              }}
             />
             {sendResult && (
               <div className={`text-sm rounded px-3 py-2 ${sendResult.ok ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
@@ -315,16 +345,14 @@ function SendReportSection({ showModal, setShowModal, passphrase, setPassphrase,
               </div>
             )}
             <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-sm text-gray-400 hover:text-gray-200 px-3 py-1.5"
-              >
+              <button onClick={() => setShowModal(false)} className="text-sm px-3 py-1.5" style={{ color: 'var(--text-moon)' }}>
                 Cancel
               </button>
               <button
                 onClick={onSend}
                 disabled={sending}
-                className="text-sm bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded px-4 py-1.5 transition-colors"
+                className="text-sm rounded px-4 py-1.5 transition-colors disabled:opacity-50"
+                style={{ background: 'var(--accent-violet)', color: '#fff' }}
               >
                 {sending ? 'Sending…' : 'Send'}
               </button>

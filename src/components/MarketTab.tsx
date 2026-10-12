@@ -18,28 +18,20 @@ const INDEX_META = [
   { type: 'international', label: 'S&P 500',             sub: 'US Large Cap (USD)',  icon: '🇺🇸' },
 ];
 
-function ReturnBar({ value, max }: { value: number | null; max: number }) {
-  if (value === null) return <div className="text-gray-700 text-xs">—</div>;
-  const pct = (Math.abs(value) / max) * 100;
-  const pos = value >= 0;
+function ReturnRow({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full ${pos ? 'bg-emerald-500' : 'bg-red-500'}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className={`text-xs font-semibold tabular-nums w-14 text-right ${pos ? 'text-emerald-400' : 'text-red-400'}`}>
-        {pos ? '+' : ''}{value.toFixed(2)}%
-      </span>
+    <div className="flex items-center justify-between py-1.5" style={{ borderBottom: '1px solid rgba(60,50,140,0.12)' }}>
+      <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-dim)' }}>{label}</span>
+      {value === null
+        ? <span className="text-xs" style={{ color: 'var(--text-dim)' }}>—</span>
+        : <ReturnBadge value={value} />
+      }
     </div>
   );
 }
 
-function IndexCard({ label, sub, icon, week, month, ytd, allVals }:
-  { label: string; sub: string; icon: string; week: number | null; month: number | null; ytd: number | null; allVals: number[] }) {
-  const maxAbs = Math.max(...allVals.map(Math.abs), 1);
+function IndexCard({ label, sub, icon, week, month, ytd }:
+  { label: string; sub: string; icon: string; week: number | null; month: number | null; ytd: number | null }) {
   const primary = week ?? month;
   const pos = (primary ?? 0) >= 0;
 
@@ -47,29 +39,20 @@ function IndexCard({ label, sub, icon, week, month, ytd, allVals }:
     <div className="card p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-xs text-gray-500 mb-0.5">{icon} {sub}</div>
-          <div className="font-semibold text-gray-100 leading-tight">{label}</div>
+          <div className="text-xs mb-0.5" style={{ color: 'var(--text-dim)' }}>{icon} {sub}</div>
+          <div className="font-semibold leading-tight" style={{ color: 'var(--text-star)' }}>{label}</div>
         </div>
         {primary !== null && (
           <div className={`text-base font-bold tabular-nums ${pos ? 'text-emerald-400' : 'text-red-400'}`}>
             {pos ? '+' : ''}{primary.toFixed(2)}%
-            <div className="text-[10px] font-normal text-gray-600 text-right">1W</div>
+            <div className="text-[10px] font-normal text-right" style={{ color: 'var(--text-dim)' }}>1W</div>
           </div>
         )}
       </div>
-      <div className="space-y-2">
-        <div>
-          <div className="text-[10px] text-gray-600 mb-0.5 uppercase tracking-wide">1 Week</div>
-          <ReturnBar value={week} max={maxAbs} />
-        </div>
-        <div>
-          <div className="text-[10px] text-gray-600 mb-0.5 uppercase tracking-wide">1 Month</div>
-          <ReturnBar value={month} max={maxAbs} />
-        </div>
-        <div>
-          <div className="text-[10px] text-gray-600 mb-0.5 uppercase tracking-wide">YTD</div>
-          <ReturnBar value={ytd} max={maxAbs} />
-        </div>
+      <div>
+        <ReturnRow label="1 Week"  value={week}  />
+        <ReturnRow label="1 Month" value={month} />
+        <ReturnRow label="YTD"     value={ytd}   />
       </div>
     </div>
   );
@@ -87,8 +70,7 @@ function NewsCard({ item, index }: { item: DashboardData['news'][number]; index:
     : null;
 
   return (
-    <div className="card2 p-4 flex gap-4 group hover:border-gray-600 transition-colors">
-      {/* left accent with number */}
+    <div className="card2 p-4 flex gap-4 group transition-colors" style={{ borderColor: 'transparent' }}>
       <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
         <div
           className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
@@ -99,15 +81,15 @@ function NewsCard({ item, index }: { item: DashboardData['news'][number]; index:
         <div className="flex-1 w-px" style={{ background: `${sourceColor}22` }} />
       </div>
 
-      {/* content */}
       <div className="flex-1 min-w-0">
         {item.url ? (
           <a href={item.url} target="_blank" rel="noopener noreferrer"
-            className="text-sm text-gray-200 group-hover:text-white transition-colors leading-snug font-medium line-clamp-2">
+            className="text-sm leading-snug font-medium line-clamp-2 transition-colors"
+            style={{ color: 'var(--text-star)' }}>
             {item.headline}
           </a>
         ) : (
-          <div className="text-sm text-gray-200 leading-snug font-medium">{item.headline}</div>
+          <div className="text-sm leading-snug font-medium" style={{ color: 'var(--text-star)' }}>{item.headline}</div>
         )}
 
         <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -117,10 +99,10 @@ function NewsCard({ item, index }: { item: DashboardData['news'][number]; index:
           >
             {item.source}
           </span>
-          {age && <span className="text-[10px] text-gray-600">{age}</span>}
+          {age && <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>{age}</span>}
           {item.url && (
             <a href={item.url} target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-gray-600 hover:text-gray-400 ml-auto transition-colors">
+              className="text-[10px] ml-auto transition-colors" style={{ color: 'var(--text-dim)' }}>
               Read ↗
             </a>
           )}
@@ -143,23 +125,23 @@ export default function MarketTab({ data }: Props) {
     };
   });
 
-  const allVals = indexData.flatMap(i => [i.week, i.month, i.ytd]).filter(v => v !== null) as number[];
-
   return (
     <div className="space-y-8">
 
       {/* ── Index performance ─────────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">Market Indices</h2>
-          <span className="text-xs text-gray-600">% returns</span>
+          <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-moon)' }}>
+            Market Indices
+          </h2>
+          <span className="text-xs" style={{ color: 'var(--text-dim)' }}>% returns</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {indexData.map(idx => (
-            <IndexCard key={idx.label} {...idx} allVals={allVals} />
+            <IndexCard key={idx.label} {...idx} />
           ))}
         </div>
-        <p className="text-xs text-gray-700 mt-2">
+        <p className="text-xs mt-2" style={{ color: 'var(--text-dim)' }}>
           Index returns via MFAPI benchmark proxy funds. Percentage returns only — no absolute index level shown.
         </p>
       </div>
@@ -167,17 +149,20 @@ export default function MarketTab({ data }: Props) {
       {/* ── Market headlines ──────────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">Market Headlines</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-moon)' }}>
+            Market Headlines
+          </h2>
           {news.length > 0 && (
-            <span className="text-xs text-gray-600">{news.length} article{news.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
+              {news.length} article{news.length !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
 
-        {/* source legend */}
         {news.length > 0 && (
           <div className="flex gap-3 flex-wrap mb-3">
             {Object.entries(SOURCE_COLORS).map(([src, color]) => (
-              <div key={src} className="flex items-center gap-1 text-[10px] text-gray-600">
+              <div key={src} className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-dim)' }}>
                 <div className="w-2 h-2 rounded-full" style={{ background: color }} />
                 {src}
               </div>
@@ -186,10 +171,12 @@ export default function MarketTab({ data }: Props) {
         )}
 
         {news.length === 0 ? (
-          <div className="card p-8 text-center text-gray-500">
+          <div className="card p-8 text-center" style={{ color: 'var(--text-moon)' }}>
             <div className="text-3xl mb-3">📰</div>
             <div className="font-medium text-sm">No headlines yet</div>
-            <div className="text-xs mt-1">Fetched every Saturday with the weekly report.</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>
+              Fetched every Saturday with the weekly report.
+            </div>
           </div>
         ) : (
           <div className="space-y-2">
