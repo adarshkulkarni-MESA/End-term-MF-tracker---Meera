@@ -151,7 +151,7 @@ export default function AppRoot() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TickerTape />
+      <TickerTape performance={data?.performance} />
 
       <div className="flex flex-1">
         {sidebarOpen && (
