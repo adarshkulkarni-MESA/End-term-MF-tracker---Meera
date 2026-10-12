@@ -16,6 +16,103 @@ const EXAMPLES = [
 
 const INPUT = 'w-full bg-[#0a0a0a] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 tabular-nums';
 
+interface GrowthChartProps {
+  amount:  number;
+  curVal:  number;
+  cagr:    number;
+  yrs:     number;
+  buyDate: string;
+}
+
+function GrowthChart({ amount, curVal, cagr, yrs, buyDate }: GrowthChartProps) {
+  if (yrs < 0.083) return null;
+
+  const STEPS = 60;
+  const W = 400, H = 160;
+  const padL = 48, padR = 16, padT = 14, padB = 28;
+  const cW = W - padL - padR;
+  const cH = H - padT - padB;
+
+  const points: { x: number; y: number; val: number }[] = [];
+  for (let i = 0; i <= STEPS; i++) {
+    const t   = (i / STEPS) * yrs;
+    const val = amount * Math.pow(1 + cagr / 100, t);
+    points.push({ x: padL + (i / STEPS) * cW, y: 0, val });
+  }
+
+  const minV = amount;
+  const maxV = Math.max(curVal, amount * 1.01);
+  const range = maxV - minV || 1;
+
+  function py(v: number) { return padT + ((maxV - v) / range) * cH; }
+
+  for (const p of points) p.y = py(p.val);
+
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${py(minV)} L ${points[0].x} ${py(minV)} Z`;
+
+  const positive = curVal >= amount;
+  const lineColor = positive ? '#10b981' : '#ef4444';
+
+  // Y-axis ticks
+  const yTicks = [maxV, (maxV + minV) / 2, minV];
+
+  // X-axis labels: start, middle, end
+  const xLabels: { label: string; x: number }[] = [
+    { label: new Date(buyDate).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), x: padL },
+    { label: new Date(Date.now() - (yrs / 2) * 365.25 * 86400000).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), x: padL + cW / 2 },
+    { label: 'Today', x: padL + cW },
+  ];
+
+  return (
+    <div>
+      <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-2">Investment Growth Curve</div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ minWidth: 280, width: '100%', height: H }}>
+          <defs>
+            <linearGradient id="growthFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor={lineColor} stopOpacity="0.25" />
+              <stop offset="100%" stopColor={lineColor} stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+
+          {/* grid lines */}
+          {yTicks.map((v, i) => (
+            <g key={i}>
+              <line x1={padL} y1={py(v)} x2={W - padR} y2={py(v)} stroke="#1e2038" strokeWidth="1" />
+              <text x={padL - 4} y={py(v) + 3} textAnchor="end" fontSize="7.5" fill="#4b5563">
+                {v >= 1e7 ? `${(v / 1e7).toFixed(1)}Cr` : v >= 1e5 ? `${(v / 1e5).toFixed(0)}L` : `${(v / 1000).toFixed(0)}k`}
+              </text>
+            </g>
+          ))}
+
+          {/* area fill */}
+          <path d={areaPath} fill="url(#growthFill)" />
+
+          {/* line */}
+          <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* start dot */}
+          <circle cx={points[0].x} cy={points[0].y} r="3.5" fill="#6366f1" />
+
+          {/* end dot with pulse */}
+          <circle cx={points[STEPS].x} cy={points[STEPS].y} r="5" fill={lineColor} opacity="0.15" />
+          <circle cx={points[STEPS].x} cy={points[STEPS].y} r="3" fill={lineColor} />
+
+          {/* x-axis labels */}
+          {xLabels.map((lbl, i) => (
+            <text key={i} x={lbl.x} y={H - 4}
+              textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}
+              fontSize="8" fill="#6b7280">
+              {lbl.label}
+            </text>
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export default function PerformanceCalculator() {
   const [amount,  setAmount]  = useState(100000);
   const [buyNav,  setBuyNav]  = useState(42.50);
@@ -82,6 +179,13 @@ export default function PerformanceCalculator() {
 
       <div className="card p-6">
         <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-5">Your Investment Summary</div>
+
+        {/* Growth chart */}
+        <div className="mb-5">
+          <GrowthChart amount={amount} curVal={curVal} cagr={cagr} yrs={yrs} buyDate={buyDate} />
+        </div>
+
+        {/* Return meter */}
         <div className="mb-5">
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
             <span>Absolute Return</span>
@@ -94,12 +198,13 @@ export default function PerformanceCalculator() {
               style={{ width: `${meterPct}%` }} />
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[
-            { label: 'Units Purchased', value: units.toFixed(4), color: 'text-gray-200' },
-            { label: 'Current Value',   value: fmtINR(curVal),   color: 'text-gray-200' },
-            { label: 'Gain / Loss',     value: (pos ? '+' : '') + fmtINR(absRet), color: pos ? 'text-emerald-400' : 'text-red-400' },
-            { label: 'CAGR',            value: (cagr >= 0 ? '+' : '') + cagr.toFixed(2) + '% p.a.', color: cagr >= 0 ? 'text-emerald-400' : 'text-red-400' },
+            { label: 'Units Purchased', value: units.toFixed(4),                                                              color: 'text-gray-200'  },
+            { label: 'Current Value',   value: fmtINR(curVal),                                                                color: 'text-gray-200'  },
+            { label: 'Gain / Loss',     value: (pos ? '+' : '') + fmtINR(absRet),                                             color: pos ? 'text-emerald-400' : 'text-red-400' },
+            { label: 'CAGR',            value: (cagr >= 0 ? '+' : '') + cagr.toFixed(2) + '% p.a.',                          color: cagr >= 0 ? 'text-emerald-400' : 'text-red-400' },
           ].map(s => (
             <div key={s.label} className="card2 p-4">
               <div className="text-xs text-gray-500 mb-1.5">{s.label}</div>

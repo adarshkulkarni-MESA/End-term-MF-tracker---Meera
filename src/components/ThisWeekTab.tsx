@@ -5,6 +5,98 @@ import { DashboardData, FundPerf } from '@/app/page';
 import VerdictBadge from './VerdictBadge';
 import ReturnBadge  from './ReturnBadge';
 
+const FUND_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#14b8a6'];
+
+function WeeklyReturnChart({ perf }: { perf: FundPerf[] }) {
+  if (perf.length === 0) return null;
+
+  const W = 400, H = 28 + perf.length * 36;
+  const padL = 16, padR = 60, padT = 20, padB = 8;
+  const cW = W - padL - padR;
+  const cH = H - padT - padB;
+  const rowH = cH / perf.length;
+
+  const allVals = perf.flatMap(f => [f.weekReturn, f.benchmarkWeek]).filter((v): v is number => v !== null);
+  const maxAbs  = Math.max(...allVals.map(Math.abs), 1);
+
+  function bw(v: number | null) {
+    if (v === null) return 0;
+    return (Math.abs(v) / maxAbs) * (cW * 0.5);
+  }
+
+  const zeroX = padL + cW * 0.5;
+
+  return (
+    <div>
+      <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-1">1-Week Returns: Fund vs Benchmark</div>
+      <div className="flex gap-4 mb-2">
+        <div className="flex items-center gap-1 text-[10px] text-gray-600"><div className="w-3 h-2 rounded-sm bg-indigo-500" /> Fund</div>
+        <div className="flex items-center gap-1 text-[10px] text-gray-600"><div className="w-3 h-2 rounded-sm bg-gray-600" /> Benchmark</div>
+      </div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ minWidth: 260, width: '100%', height: H }}>
+          {/* zero axis */}
+          <line x1={zeroX} y1={padT - 8} x2={zeroX} y2={H - padB} stroke="#374151" strokeWidth="1" />
+          <text x={zeroX} y={padT - 10} textAnchor="middle" fontSize="7" fill="#4b5563">0%</text>
+
+          {perf.map((f, fi) => {
+            const color   = FUND_COLORS[fi % FUND_COLORS.length];
+            const cy      = padT + fi * rowH;
+            const fundW   = bw(f.weekReturn);
+            const benchW  = bw(f.benchmarkWeek);
+            const fundPos = (f.weekReturn ?? 0) >= 0;
+            const name    = f.schemeName.split(' ').slice(0, 3).join(' ');
+
+            return (
+              <g key={f.schemeCode}>
+                {/* fund bar */}
+                <rect
+                  x={fundPos ? zeroX : zeroX - fundW}
+                  y={cy + 2}
+                  width={fundW}
+                  height={rowH * 0.38}
+                  rx="2"
+                  fill={color}
+                  opacity="0.9"
+                />
+                {/* benchmark bar */}
+                {f.benchmarkWeek !== null && (
+                  <rect
+                    x={(f.benchmarkWeek >= 0) ? zeroX : zeroX - benchW}
+                    y={cy + rowH * 0.42 + 3}
+                    width={benchW}
+                    height={rowH * 0.28}
+                    rx="1.5"
+                    fill="#6b7280"
+                    opacity="0.65"
+                  />
+                )}
+                {/* fund name label */}
+                <text x={padL} y={cy + 1} fontSize="7.5" fill="#9ca3af" dominantBaseline="hanging">
+                  {name}
+                </text>
+                {/* value label */}
+                {f.weekReturn !== null && (
+                  <text
+                    x={W - padR + 4}
+                    y={cy + rowH * 0.22 + 2}
+                    fontSize="8.5"
+                    fill={fundPos ? '#34d399' : '#f87171'}
+                    fontWeight="600"
+                    dominantBaseline="middle"
+                  >
+                    {fundPos ? '+' : ''}{f.weekReturn.toFixed(2)}%
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 interface Props { data: DashboardData }
 
 function autoSummary(f: FundPerf): string {
@@ -109,6 +201,13 @@ export default function ThisWeekTab({ data }: Props) {
           </div>
           <VerdictBadge verdict={report.verdict} />
           <p className="text-gray-300 mt-3 text-sm max-w-xl mx-auto">{report.reason}</p>
+        </div>
+      )}
+
+      {/* ── Weekly returns chart ─────────────────────────────────────── */}
+      {perf.length > 0 && (
+        <div className="card p-5">
+          <WeeklyReturnChart perf={perf} />
         </div>
       )}
 
