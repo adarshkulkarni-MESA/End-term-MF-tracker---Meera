@@ -31,11 +31,12 @@ create index if not exists nav_history_code_date on nav_history(scheme_code, nav
 
 -- ── 4. market_indices ────────────────────────────────────────────────────────
 create table if not exists market_indices (
-  id          serial primary key,
-  name        text not null unique,
-  ticker      text not null,
-  fund_type   text,
-  is_active   boolean not null default true
+  id                serial primary key,
+  name              text not null unique,
+  ticker            text not null,
+  fund_type         text,
+  is_active         boolean not null default true,
+  mfapi_scheme_code text    -- MFAPI.in proxy fund code used for index price ingestion
 );
 
 -- ── 5. benchmark_map ─────────────────────────────────────────────────────────
@@ -100,11 +101,11 @@ create table if not exists reports (
 
 -- ── Seed data ─────────────────────────────────────────────────────────────────
 
-insert into market_indices (name, ticker, fund_type) values
-  ('Nifty 50',          '^NSEI',    'large_cap'),
-  ('Nifty Midcap 150',  '^NSEMDCP50', 'mid_cap'),
-  ('Nifty Smallcap 100','^NSESC100', 'small_cap'),
-  ('S&P 500',           '^GSPC',    'international')
+insert into market_indices (name, ticker, fund_type, mfapi_scheme_code) values
+  ('Nifty 50',          '^NSEI',      'large_cap',    '119063'),
+  ('Nifty Midcap 150',  '^NSEMDCP50', 'mid_cap',      '147622'),
+  ('Nifty Smallcap 100','^NSESC100',  'small_cap',    '148519'),
+  ('S&P 500',           '^GSPC',      'international', '148381')
 on conflict (name) do nothing;
 
 insert into benchmark_map (fund_type, index_name) values
